@@ -1,9 +1,17 @@
 import React from 'react'
 import {Link, useLoaderData} from '@remix-run/react'
-import sortBy from 'sort-by'
 
 // https://jsonplaceholder.typicode.com/users
 const url = `https://jsonplaceholder.typicode.com/users`
+
+type addressType = {
+  street: string
+  suite: string
+  city: string
+  zipcode: string
+  lat: string
+  lng: string
+}
 
 async function fetchUsers() {
   try {
@@ -19,9 +27,9 @@ async function fetchUsers() {
   }
 }
 
-function flatAddress(arr, key) {
-  const address = arr.map(d => d[key])
-  return address.map(d => {
+function flatAddress(arr: any, key: string) {
+  const address = arr.map((d: any) => d[key])
+  return address.map((d: any) => {
     const {geo, ...props} = d
     return {...props, ...geo}
   })
@@ -35,7 +43,9 @@ export async function loader({request}: {request: Request}) {
   const by = url.searchParams.get('by') || 'street'
   return {
     users,
-    data: data.sort(sortBy(sort === 'asc' ? by : `-${by}`)),
+    data: data.sort((a, b) =>
+      sort === 'asc' ? a[by].localeCompare(b[by]) : b[by].localeCompare(a[by]),
+    ),
     sort,
     by,
   }
@@ -63,9 +73,7 @@ function SortLink({
 }
 
 export default function SortTableRemixWay() {
-  const {users, sort, by, data} = useLoaderData()
-  const linkSort = sort === 'asc' ? 'desc' : 'asc'
-  console.log({linkSort, by})
+  const {users, data} = useLoaderData()
 
   return (
     <div className="flex flex-col items-center p-8">
@@ -91,7 +99,7 @@ export default function SortTableRemixWay() {
             </tr>
           </thead>
           <tbody>
-            {data.map((d, i) => {
+            {data.map((d: addressType, i: number) => {
               return (
                 <tr
                   key={i}
