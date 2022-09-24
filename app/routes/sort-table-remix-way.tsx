@@ -1,6 +1,5 @@
 import React from 'react'
 import {Link, useLoaderData} from '@remix-run/react'
-import sortBy from 'sort-by'
 
 // https://jsonplaceholder.typicode.com/users
 const url = `https://jsonplaceholder.typicode.com/users`
@@ -35,7 +34,9 @@ export async function loader({request}: {request: Request}) {
   const by = url.searchParams.get('by') || 'street'
   return {
     users,
-    data: data.sort(sortBy(sort === 'asc' ? by : `-${by}`)),
+    data: data.sort((a, b) =>
+      sort === 'asc' ? a[by].localeCompare(b[by]) : b[by].localeCompare(a[by]),
+    ),
     sort,
     by,
   }
@@ -63,9 +64,7 @@ function SortLink({
 }
 
 export default function SortTableRemixWay() {
-  const {users, sort, by, data} = useLoaderData()
-  const linkSort = sort === 'asc' ? 'desc' : 'asc'
-  console.log({linkSort, by})
+  const {users, data} = useLoaderData()
 
   return (
     <div className="flex flex-col items-center p-8">
