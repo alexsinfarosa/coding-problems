@@ -1,12 +1,13 @@
-import {Link, useSearchParams} from '@remix-run/react'
 import React from 'react'
+import {Link, useLoaderData} from '@remix-run/react'
+import sortBy from 'sort-by'
 
 // https://jsonplaceholder.typicode.com/users
 const url = `https://jsonplaceholder.typicode.com/users`
 
-async function fetchUsers(signal: any) {
+async function fetchUsers() {
   try {
-    const res = await fetch(url, {signal})
+    const res = await fetch(url)
 
     if (!res.ok) {
       throw new Error(`There was an error: ${res.status}`)
@@ -26,32 +27,45 @@ function flatAddress(arr, key) {
   })
 }
 
-export default function SortTableRemixWay() {
-  const [users, setUsers] = React.useState([])
+export async function loader({request}: {request: Request}) {
+  const users = await fetchUsers()
   const data = flatAddress(users, 'address')
-  const [searchParams] = useSearchParams()
-  const sort = searchParams.get('sort') || ''
-  const [key, desc] = sort.split(':')
+  const url = new URL(request.url)
+  const sort = url.searchParams.get('sort') || 'asc'
+  const by = url.searchParams.get('by') || 'street'
+  return {
+    users,
+    data: data.sort(sortBy(sort === 'asc' ? by : `-${by}`)),
+    sort,
+    by,
+  }
+}
 
-  const sortedData = [...data].sort((a, b) =>
-    desc ? b[key]?.localeCompare(a[key]) : a[key]?.localeCompare(b[key]),
+function SortLink({
+  field,
+  children,
+}: {
+  field: string
+  children: React.ReactNode
+}) {
+  const {sort, by} = useLoaderData()
+  const isActive = by === field
+  const sortParam = !isActive ? sort : sort === 'asc' ? 'desc' : 'asc'
+
+  return (
+    <Link
+      to={`?sort=${sortParam}&by=${field}`}
+      className={isActive ? 'text-red-600' : 'inherit'}
+    >
+      {children} {sort === 'asc' ? '↓' : '↑'}
+    </Link>
   )
+}
 
-  React.useEffect(() => {
-    const controller = new AbortController()
-    const signal = controller.signal
-
-    async function startFetchingUser() {
-      const users = await fetchUsers(signal)
-      setUsers(users)
-    }
-
-    startFetchingUser()
-
-    return () => {
-      controller.abort()
-    }
-  }, [])
+export default function SortTableRemixWay() {
+  const {users, sort, by, data} = useLoaderData()
+  const linkSort = sort === 'asc' ? 'desc' : 'asc'
+  console.log({linkSort, by})
 
   return (
     <div className="flex flex-col items-center p-8">
@@ -65,31 +79,19 @@ export default function SortTableRemixWay() {
 
       <br />
 
-      {sortedData.length && (
+      {data.length && (
         <table className="w-full table-auto">
           <thead>
             <tr>
-              {Object.keys(sortedData[0]).map(k => {
-                let sorted = null
-                if (key === '' || desc || key !== k) sorted = k
-                if (key === k && !desc) sorted = `${k}:desc`
-                return (
-                  <th key={k} className="mb-2 bg-orange-200 text-left">
-                    <Link
-                      to={sorted ? `./?sort=${sorted}` : '.'}
-                      className="text-lg font-semibold "
-                    >
-                      {k} {k === '' && !desc && ''}
-                      {k === key && !desc && '🔼'}
-                      {k === key && desc && '🔽'}
-                    </Link>
-                  </th>
-                )
-              })}
+              {Object.keys(data[0]).map(key => (
+                <th key={key} className="mb-2 bg-orange-200 text-left">
+                  <SortLink field={key}>{key}</SortLink>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {sortedData.map((d, i) => {
+            {data.map((d, i) => {
               return (
                 <tr
                   key={i}

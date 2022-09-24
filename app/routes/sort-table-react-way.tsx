@@ -83,8 +83,8 @@ export default function SortTableReactWay() {
                       className="text-lg font-semibold "
                     >
                       {k} {k === '' && !desc && ''}
-                      {k === key && !desc && '🔼'}
-                      {k === key && desc && '🔽'}
+                      {k === key && !desc && '🔽'}
+                      {k === key && desc && '🔼'}
                     </button>
                   </th>
                 )
