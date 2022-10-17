@@ -19,11 +19,13 @@ export default function SimpleDataFetch() {
       const data = await res.json()
       return data.results[0]
     } catch (error) {
-      if (error.name === 'AbortError') {
-        console.log('fetchUser was aborted')
-      } else {
-        setIsError(true)
-        setUser(null)
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          console.log('fetchUser was aborted')
+        } else {
+          setIsError(true)
+          setUser(null)
+        }
       }
     } finally {
       setIsLoading(false)
