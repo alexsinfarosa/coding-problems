@@ -1,8 +1,136 @@
 import clsx from 'clsx'
-import {useState} from 'react'
+import React from 'react'
 
-function calculateWinner(squares: (null | string)[]): number[] | undefined {
-  const wins = [
+export default function TicTacToe() {
+  const [history, setHistory] = React.useState<(string | null)[][]>([
+    Array(9).fill(null),
+  ])
+
+  const [currentMove, setCurrentMove] = React.useState(0)
+  const squares: (string | null)[] = history[currentMove]
+
+  const [isX, setIsX] = React.useState(false)
+  const winner = calculateWinner(squares)
+
+  function handleClick(i: number) {
+    if (squares[i] || winner) return
+
+    const nextSquares = [...squares]
+
+    if (isX) {
+      nextSquares[i] = 'O'
+      setIsX(false)
+    } else {
+      nextSquares[i] = 'X'
+      setIsX(true)
+    }
+
+    const nextHistory = [...history, nextSquares]
+    setHistory(nextHistory)
+    setCurrentMove(currentMove + 1)
+  }
+
+  React.useEffect(() => {
+    const val = Math.random()
+    if (val > 0.5) setIsX(true)
+    if (val <= 0.5) setIsX(false)
+  }, [])
+
+  return (
+    <main className="flex flex-col justify-center items-center h-screen">
+      <section className="mb-8">
+        {winner ? (
+          <h2 className="text-5xl font-semibold">
+            Winner: <span className="text-red-500">{winner?.player}</span>
+          </h2>
+        ) : (
+          <h2 className="text-5xl font-semibold">
+            Next Player: {isX ? 'O' : 'X'}
+          </h2>
+        )}
+      </section>
+
+      <div className="flex gap-8 mb-8">
+        <div className="grid grid-cols-3 grid-rows-3 border">
+          {squares.map((square, i) => {
+            let isColored = false
+            if (winner) {
+              isColored = winner.line.includes(i)
+            }
+            return (
+              <Square
+                key={i}
+                i={i}
+                onSquareClick={handleClick}
+                isColored={isColored}
+              >
+                {square}
+              </Square>
+            )
+          })}
+        </div>
+        <div className="">
+          <h2 className="text-gray-500 font-semibold mb-2">Play-By-Play</h2>
+          <ul>
+            {history.map((move, i) => {
+              if (i > 0) {
+                return (
+                  <li key={i} className=" my-1">
+                    <button
+                      className="inline-flex items-center rounded border border-transparent bg-emerald-100 px-2.5 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                      onClick={() => setCurrentMove(i)}
+                    >
+                      Go to move #{i}
+                    </button>
+                  </li>
+                )
+              } else {
+                return null
+              }
+            })}
+          </ul>
+        </div>
+      </div>
+
+      <button
+        className="w-20 h-20 items-center rounded-full border border-transparent bg-emerald-600 p-3 text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+        onClick={() => {
+          setHistory([Array(9).fill(null)])
+          setCurrentMove(0)
+        }}
+      >
+        Reset
+      </button>
+    </main>
+  )
+}
+
+function Square({
+  i,
+  children,
+  onSquareClick,
+  isColored,
+}: {
+  i: number
+  children: string | null
+  onSquareClick: (i: number) => void
+  isColored: boolean | undefined
+}) {
+  return (
+    <button
+      className={clsx(
+        'w-28 h-28 border text-7xl',
+        isColored ? 'text-red-500' : '',
+      )}
+      onClick={() => onSquareClick(i)}
+    >
+      {children}
+    </button>
+  )
+}
+
+function calculateWinner(squares: (string | null)[]) {
+  const lines = [
     [0, 1, 2],
     [3, 4, 5],
     [6, 7, 8],
@@ -12,84 +140,11 @@ function calculateWinner(squares: (null | string)[]): number[] | undefined {
     [0, 4, 8],
     [2, 4, 6],
   ]
-  return wins.find(win => {
-    const a = squares[win[0]]
-    const b = squares[win[1]]
-    const c = squares[win[2]]
-    if (!a && !b && !c) {
-      return undefined
-    } else {
-      return a === b && b === c
+
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i]
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return {player: squares[a], line: lines[i]}
     }
-  })
-}
-
-function nextValue(val: string | null) {
-  if (!val) return Math.random() > 0.5 ? 'X' : 'O'
-  if (val === 'X') return 'O'
-  if (val === 'O') return 'X'
-}
-
-function Board() {
-  const [squares, setSquares] = useState(() => Array(9).fill(null))
-  const [current, setCurrent] = useState(null)
-  const winner = calculateWinner(squares)
-
-  function selectSquare(index: number) {
-    const squaresCopy = [...squares]
-    squaresCopy[index] = nextValue(current)
-    setCurrent(squaresCopy[index])
-    setSquares(squaresCopy)
   }
-
-  return (
-    <div className="">
-      <h1 className="mb-4 text-3xl font-medium text-gray-700">Tic Tac Toe</h1>
-      <div className="grid h-96 w-96 grid-cols-3 grid-rows-3 rounded-lg border">
-        {squares.map((cell, index) => (
-          <button
-            key={index}
-            disabled={winner !== undefined}
-            className={clsx(
-              (index + 1) % 3 === 0 ? '' : 'border-r',
-              index < 6 && `border-b`,
-              'text-7xl',
-              winner &&
-                (winner[0] === index ||
-                  winner[1] === index ||
-                  winner[2] === index) &&
-                'text-rose-600',
-            )}
-            onClick={() => selectSquare(index)}
-          >
-            {cell}
-          </button>
-        ))}
-      </div>
-      <div className="flex items-baseline space-x-4">
-        <button
-          type="button"
-          className="mt-8 inline-flex items-center rounded-md border border-transparent bg-rose-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
-          onClick={() => setSquares(Array(9).fill(null))}
-        >
-          Reset
-        </button>
-        {winner && (
-          <h3 className="text-3xl font-medium text-gray-700">Winner! 🎉 </h3>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default function Index() {
-  return (
-    <div className="container mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-      <div className="overflow-hidden rounded-lg bg-white shadow">
-        <div className="flex justify-center space-x-8 px-4 py-5 sm:p-6">
-          <Board></Board>
-        </div>
-      </div>
-    </div>
-  )
 }
