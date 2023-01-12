@@ -5,8 +5,9 @@ export default function Inputs() {
   const [value, setValue] = React.useState('') // <- cannot be undefined
 
   const id = React.useId()
-  const textInputUncontrolled = `${id}-text-uncontrolled`
-  const textInputControlled = `${id}-text-controlled`
+  const noBinding = `${id}-no-binding`
+  const oneWayBinding = `${id}-one-way-binding`
+  const twoWayBinding = `${id}-two-way-binding`
 
   return (
     <main className="p-8">
@@ -18,9 +19,9 @@ export default function Inputs() {
           <legend className="text-gray-500 font-serif">
             Uncontrolled Text Input
           </legend>
-          <label htmlFor={textInputUncontrolled}>Uncontrolled Input:</label>
+          <label htmlFor={noBinding}>Uncontrolled Input:</label>
           <input
-            id={textInputUncontrolled}
+            id={noBinding}
             className="rounded-md border border-gray-300 ml-2"
             type="text"
           />
@@ -28,7 +29,7 @@ export default function Inputs() {
       </form>
       <p className="p-4 text-gray-500 text-sm">
         No way data binding 😂. React does not handle it. The user agent
-        (browser) does...
+        (browser) handles things...
       </p>
       <br></br>
 
@@ -38,9 +39,9 @@ export default function Inputs() {
           <legend className="text-gray-500 font-serif">
             Controlled Text Input
           </legend>
-          <label htmlFor={textInputControlled}>Controlled Input:</label>
+          <label htmlFor={oneWayBinding}>Controlled Input:</label>
           <input
-            id={textInputControlled}
+            id={oneWayBinding}
             className="rounded-md border border-gray-300 ml-2"
             type="text"
             value={oneWayDataBinding}
@@ -60,9 +61,9 @@ export default function Inputs() {
           <legend className="text-gray-500 font-serif">
             Controlled Text Input
           </legend>
-          <label htmlFor={textInputControlled}>Controlled Input:</label>
+          <label htmlFor={twoWayBinding}>Controlled Input:</label>
           <input
-            id={textInputControlled}
+            id={twoWayBinding}
             className="rounded-md border border-gray-300 ml-2"
             type="text"
             value={value}
